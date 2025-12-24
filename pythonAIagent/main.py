@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 from prompts import system_prompt
+from call_function import available_functions
 
 load_dotenv()
 api_key = os.environ.get("GEMINI_API_KEY")
@@ -26,7 +27,10 @@ client = genai.Client(api_key=api_key)
 response = client.models.generate_content(
     model ='gemini-2.5-flash',
     contents=messages,
-    config=types.GenerateContentConfig(system_instruction=system_prompt),
+    config=types.GenerateContentConfig(
+        tools=[available_functions],
+        system_instruction=system_prompt
+        ),
 )
 if response.usage_metadata == None:
     raise RuntimeError("Failed API request")
@@ -38,5 +42,8 @@ else:
         print("Prompt tokens: " + str(prompt_tokens))
         print("Response tokens: " + str(response_tokens))
     print("Response:")
-    first_line = response.text.splitlines()[0]
-    print(first_line)
+    if response.function_calls:
+        for function_call in response.function_calls:
+            print(f"Calling function: {function_call.name}({function_call.args})")
+    else:
+        print(response.text)
