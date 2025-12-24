@@ -1,11 +1,12 @@
 import os
 from dotenv import load_dotenv
+from prompts import system_prompt
 
 load_dotenv()
 api_key = os.environ.get("GEMINI_API_KEY")
 
 if api_key == None:
-    raise RunTimeError("api key is none")
+    raise RuntimeError("api key is none")
 else:
     print("api key is good")
 
@@ -23,7 +24,9 @@ messages = [types.Content(role="user", parts=[types.Part(text=args.user_prompt)]
 
 client = genai.Client(api_key=api_key)
 response = client.models.generate_content(
-    model ='gemini-2.5-flash', contents=messages
+    model ='gemini-2.5-flash',
+    contents=messages,
+    config=types.GenerateContentConfig(system_instruction=system_prompt),
 )
 if response.usage_metadata == None:
     raise RuntimeError("Failed API request")
@@ -35,4 +38,5 @@ else:
         print("Prompt tokens: " + str(prompt_tokens))
         print("Response tokens: " + str(response_tokens))
     print("Response:")
-    print(response.text)
+    first_line = response.text.splitlines()[0]
+    print(first_line)
