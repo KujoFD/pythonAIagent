@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from prompts import system_prompt
-from call_function import available_functions
+from call_function import available_functions, call_function
 
 load_dotenv()
 api_key = os.environ.get("GEMINI_API_KEY")
@@ -42,8 +42,20 @@ else:
         print("Prompt tokens: " + str(prompt_tokens))
         print("Response tokens: " + str(response_tokens))
     print("Response:")
+    function_calls_list =[]
     if response.function_calls:
         for function_call in response.function_calls:
-            print(f"Calling function: {function_call.name}({function_call.args})")
+            function_call_result = call_function(function_call)
+            if not function_call_result.parts:
+                raise Exception("function_call_result.parts is empty")
+            else:
+                part = function_call_result.parts[0]
+            if part.function_response is None:
+                raise Exception("part.function_response is None")
+            if part.function_response.response is None:
+                raise Exception("part.function_response.response is None")
+            function_calls_list.append(part)
+            if args.verbose:
+                print(f"->{part.function_response.response}")
     else:
         print(response.text)
